@@ -1,0 +1,9 @@
+# Node.js dependencies
+node_modules/
+
+# IDE settings
+.vscode/
+
+# Environment variable files
+# .env
+# .env.local
