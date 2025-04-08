@@ -30,6 +30,12 @@ const userSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  resetPassId: {
+    type: String
+  },
+  resetPassExpiredAt:{
+    type: Date,
+  },
 },
 {
   timestamps: true,

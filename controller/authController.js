@@ -1,8 +1,9 @@
+const generateRandomString = require("../helpers/generateRandomString");
 const { sendMail } = require("../helpers/mail");
-const { verifyEmailTemplate } = require("../helpers/templates");
+const { verifyEmailTemplate, resetPassTemplate } = require("../helpers/templates");
 const { emailValidator } = require("../helpers/validators");
 const userSchema = require("../models/userSchema");
-
+const jwt = require('jsonwebtoken');
 // Registration Controller
 const registration = async (req, res) => {
   const { fullName, email, password, avatar } = req.body;
@@ -59,13 +60,77 @@ const verifyEmailAddress = async (req, res)=>{
 const loginController = async (req, res) => {
   const { email, password } = req.body;
 
+ try {
   if (!email) return res.status(400).send("Email is required!");
   if (emailValidator(email)) return res.status(400).send("Email is not valid");
   if (!password) return res.status(400).send("Passord is required!");
   const existingUser = await userSchema.findOne({ email });
+  if(!existingUser) return res.status(400).send("User not found!")
   const passCheck = await existingUser.isPasswordValid(password);
   if (!passCheck) return res.status(400).send("Wrong password");
+  if(!existingUser.isVarified) return res.status(400).send("Email is not verified!");
 
-  res.status(200).send("Login Sussessfull");
+  const accessToken = jwt.sign({
+    data: {
+      email: existingUser.email,
+      id: existingUser._id
+    }
+  }, process.env.JWT_SEC, { expiresIn: '24h' });
+  
+  const loggedUser = {
+    email: existingUser.email,
+    _id: existingUser._id,
+    fullName: existingUser.fullName,
+    avatar: existingUser.avatar,
+    isVarified: existingUser.isVarified,
+    createdAt: existingUser.createdAt,
+    updatedAt: existingUser.updatedAt
+  }
+
+  res.status(200).send({message: "Login Sussessfull", user: loggedUser, accessToken});
+ } catch (error) {
+  res.status(500).send("Server error!")
+ }
 };
-module.exports = { registration, verifyEmailAddress, loginController };
+
+// Forgat password
+const forgatPass = async (req, res) => {
+  const {email} = req.body;
+
+ try {
+  if (!email) return res.status(400).send("Email is required!");
+  const existingUser = await userSchema.findOne({ email });
+  if(!existingUser) return res.status(400).send("User not found!")
+  
+  const randomString = generateRandomString(28);
+  existingUser.resetPassId = randomString;
+  existingUser.resetPassExpiredAt = new Date(Date.now() + 10 * 60 * 1000)
+  existingUser.save()
+
+  // Send reset password email
+  sendMail(email, "Reset Password.", resetPassTemplate, randomString)
+  res.status(201).send("Check your email")
+ } catch (error) {
+  res.status(500).send("Server error!")
+ }
+}
+
+// Reset password
+const resetPass = async (req, res)=>{
+ const {newPass} =  req.body;
+ const randomString = req.params.randomstring;
+ const email = req.query.email;
+ console.log(email, randomString);
+ 
+ const existingUser = await userSchema.findOne({email, resetPassId: randomString, resetPassExpiredAt: {$gt: Date.now()}})  
+ if(!existingUser) return res.status(400).send("Invalid Request!")
+ if(!newPass) return res.status(400).send("Input your new password")
+  existingUser.password = newPass;
+  existingUser.resetPassId = null;
+  existingUser.resetPassExpiredAt = null;
+  existingUser.save()
+
+  res.send("Reset password successfully!")
+}
+
+module.exports = { registration, verifyEmailAddress, loginController, forgatPass, resetPass };
