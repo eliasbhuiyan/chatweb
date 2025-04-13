@@ -1,9 +1,11 @@
+const cloudinary = require("../helpers/cloudinary");
 const generateRandomString = require("../helpers/generateRandomString");
 const { sendMail } = require("../helpers/mail");
 const { verifyEmailTemplate, resetPassTemplate } = require("../helpers/templates");
 const { emailValidator } = require("../helpers/validators");
 const userSchema = require("../models/userSchema");
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
 // Registration Controller
 const registration = async (req, res) => {
   const { fullName, email, password, avatar } = req.body;
@@ -120,7 +122,6 @@ const resetPass = async (req, res)=>{
  const {newPass} =  req.body;
  const randomString = req.params.randomstring;
  const email = req.query.email;
- console.log(email, randomString);
  
  const existingUser = await userSchema.findOne({email, resetPassId: randomString, resetPassExpiredAt: {$gt: Date.now()}})  
  if(!existingUser) return res.status(400).send("Invalid Request!")
@@ -130,7 +131,29 @@ const resetPass = async (req, res)=>{
   existingUser.resetPassExpiredAt = null;
   existingUser.save()
 
-  res.send("Reset password successfully!")
+  res.status(200).send("Reset password successfully!")
 }
 
-module.exports = { registration, verifyEmailAddress, loginController, forgatPass, resetPass };
+const update = async (req, res)=>{
+  const {fullName, password, avatar} = req.body;
+  const updatedFields = {}
+  if(fullName) updatedFields.fullName = fullName.trim();
+  if(password) updatedFields.password = password;
+  if(avatar) updatedFields.avatar = avatar;
+
+  cloudinary.uploader.upload(req.file.path, (error, result) => {
+    if (error) {
+      console.log(error);
+      return res.status(500).json({ error: 'Error uploading to Cloudinary' });
+    }
+    console.log(result);
+    console.log(req.file.path);
+    
+    fs.unlinkSync(req.file.path)
+  })
+
+  const existingUser = await userSchema.findByIdAndUpdate("67f4f9f083c5409a6898f62f" , updatedFields, {new: true})
+   
+  res.send(existingUser)
+}
+module.exports = { registration, verifyEmailAddress, loginController, forgatPass, resetPass, update};
