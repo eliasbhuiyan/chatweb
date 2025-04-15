@@ -119,41 +119,44 @@ const forgatPass = async (req, res) => {
 
 // Reset password
 const resetPass = async (req, res)=>{
- const {newPass} =  req.body;
- const randomString = req.params.randomstring;
- const email = req.query.email;
- 
- const existingUser = await userSchema.findOne({email, resetPassId: randomString, resetPassExpiredAt: {$gt: Date.now()}})  
- if(!existingUser) return res.status(400).send("Invalid Request!")
- if(!newPass) return res.status(400).send("Input your new password")
-  existingUser.password = newPass;
-  existingUser.resetPassId = null;
-  existingUser.resetPassExpiredAt = null;
-  existingUser.save()
-
-  res.status(200).send("Reset password successfully!")
+  try {
+    const {newPass} =  req.body;
+    const randomString = req.params.randomstring;
+    const email = req.query.email;
+    
+    const existingUser = await userSchema.findOne({email, resetPassId: randomString, resetPassExpiredAt: {$gt: Date.now()}})  
+    if(!existingUser) return res.status(400).send("Invalid Request!")
+    if(!newPass) return res.status(400).send("Input your new password")
+     existingUser.password = newPass;
+     existingUser.resetPassId = null;
+     existingUser.resetPassExpiredAt = null;
+     existingUser.save()
+   
+     res.status(200).send("Reset password successfully!")
+  } catch (error) {
+    res.status(500).send("Server error!")
+  }
 }
 
-const update = async (req, res)=>{
-  const {fullName, password, avatar} = req.body;
-  const updatedFields = {}
-  if(fullName) updatedFields.fullName = fullName.trim();
-  if(password) updatedFields.password = password;
-  if(avatar) updatedFields.avatar = avatar;
+const update = async (req, res)=>{  
+  const {fullName, password} = req.body;
+ try {
+   const existingUser = await userSchema.findById(req.user.id)
 
-  cloudinary.uploader.upload(req.file.path, (error, result) => {
-    if (error) {
-      console.log(error);
-      return res.status(500).json({ error: 'Error uploading to Cloudinary' });
-    }
-    console.log(result);
-    console.log(req.file.path);
-    
+  if(fullName) existingUser.fullName = fullName.trim();
+  if(password) existingUser.password = password;
+
+  if(req.file.path){
+    await cloudinary.uploader.destroy(existingUser.avatar.split('/').pop().split('.')[0])
+    const result = await cloudinary.uploader.upload(req.file.path)
+    existingUser.avatar = result.url;
     fs.unlinkSync(req.file.path)
-  })
+  }
+  existingUser.save()
 
-  const existingUser = await userSchema.findByIdAndUpdate("67f4f9f083c5409a6898f62f" , updatedFields, {new: true})
-   
-  res.send(existingUser)
+  res.status(200).send(existingUser)
+ } catch (error) {
+  res.status(500).send("Server error!")
+ }
 }
 module.exports = { registration, verifyEmailAddress, loginController, forgatPass, resetPass, update};
