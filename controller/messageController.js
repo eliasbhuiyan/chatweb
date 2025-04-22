@@ -2,7 +2,6 @@ const conversationSchema = require("../models/conversationSchema");
 const messageSchema = require("../models/messageSchema");
 
 const sendMessage = async (req, res)=>{
-    
 try {
     const {reciverId, content, conversationId} = req.body;
     if(!reciverId || !content || !conversationId){
@@ -23,23 +22,20 @@ try {
 
     await conversationSchema.findByIdAndUpdate(existingConversation._id, {lastMessage: message})
     
-    global.io.emit("new_message", {message})
+    global.io.emit("new_message", {message, conversationId: conversationId})
 
-
-    res.status(200).send(message)
+    res.status(200).send({message, conversationId: conversationId})
 } catch (error) {
   res.status(500).send("Server error!")
 }
 }
 
-
 const getMessages = async (req, res)=>{
     try {
      const {conversationid} = req.params;
-    console.log(conversationid);
     
      const messages = await messageSchema.find({conversation: conversationid})
-    res.status(200).send(messages)
+     res.status(200).send(messages)
     } catch (error) {
       res.status(500).send("Server error!")
     }

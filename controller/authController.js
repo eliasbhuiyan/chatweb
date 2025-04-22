@@ -11,12 +11,12 @@ const registration = async (req, res) => {
   const { fullName, email, password, avatar } = req.body;
 
   try {
-    if (!fullName) return res.status(400).send("Name is required!");
-      if (!email) return res.status(400).send("Email is required!");
-      if (!password) return res.status(400).send("Passord is required!");
-      if (emailValidator(email)) return res.status(400).send("Email is not valid");
+    if (!fullName) return res.status(400).send({error: "Name is required!"});
+      if (!email) return res.status(400).send({error: "Email is required!"});
+      if (!password) return res.status(400).send({error: "Passord is required!"});
+      if (emailValidator(email)) return res.status(400).send({error: "Email is not valid"});
       const existingUser = await userSchema.findOne({ email });
-      if (existingUser) return res.status(400).send("Email already exist!");
+      if (existingUser) return res.status(400).send({error: "Email already exist!"});
     
       // Generate random 4 digit OTP number
       const randomOtp = Math.floor(Math.random() * 9000);
@@ -34,9 +34,9 @@ const registration = async (req, res) => {
       // Send this genarated otp to the user email
       sendMail(email, "Verify your email.", verifyEmailTemplate, randomOtp)
 
-      res.status(201).send("Registration susseccfull! Please verify your email.");
+      res.status(201).send({success: "Registration susseccfull! Please verify your email."});
   } catch (error) {
-    res.status(500).send("Server error!")
+    res.status(500).send({error: "Server error!"})
   }
 };
 
@@ -44,17 +44,17 @@ const verifyEmailAddress = async (req, res)=>{
   const {email, otp} = req.body;
 
   try {
-    if(!email || !otp) return res.status(400).send("Invalid reqest!")
+    if(!email || !otp) return res.status(400).send({error: "Invalid reqest!"})
       const verifiedUser = await userSchema.findOne({email, otp, otpExpiredAt: {$gt: Date.now()}})  
-      if(!verifiedUser) return res.status(400).send("Invalid OTP!")
+      if(!verifiedUser) return res.status(400).send({error: "Invalid OTP!"})
      
       verifiedUser.otp = null;
       verifiedUser.otpExpiredAt = null;
       verifiedUser.isVarified = true;  
       verifiedUser.save()
-      res.status(200).send("Email verified successfully!")
+      res.status(200).send({success: "Email verified successfully!"})
   } catch (error) {
-    res.status(500).send("Server error!")
+    res.status(500).send({error: "Server error!"})
   }
 }
 
