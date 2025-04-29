@@ -63,14 +63,14 @@ const loginController = async (req, res) => {
   const { email, password } = req.body;
 
  try {
-  if (!email) return res.status(400).send("Email is required!");
-  if (emailValidator(email)) return res.status(400).send("Email is not valid");
-  if (!password) return res.status(400).send("Passord is required!");
+  if (!email) return res.status(400).send({error: "Email is required!"});
+  if (emailValidator(email)) return res.status(400).send({error: "Email is not valid"});
+  if (!password) return res.status(400).send({error: "Passord is required!"});
   const existingUser = await userSchema.findOne({ email });
-  if(!existingUser) return res.status(400).send("User not found!")
+  if(!existingUser) return res.status(400).send({error: "User not found!"})
   const passCheck = await existingUser.isPasswordValid(password);
-  if (!passCheck) return res.status(400).send("Wrong password");
-  if(!existingUser.isVarified) return res.status(400).send("Email is not verified!");
+  if (!passCheck) return res.status(400).send({error: "Wrong password"});
+  if(!existingUser.isVarified) return res.status(400).send({error: "Email is not verified!"});
 
   const accessToken = jwt.sign({
     data: {
@@ -89,9 +89,9 @@ const loginController = async (req, res) => {
     updatedAt: existingUser.updatedAt
   }
 
-  res.status(200).send({message: "Login Sussessfull", user: loggedUser, accessToken});
+  res.status(200).send({success: "Login Sussessfull", user: loggedUser, accessToken});
  } catch (error) {
-  res.status(500).send("Server error!")
+  res.status(500).send({error: "Server error!"})
  }
 };
 

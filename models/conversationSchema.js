@@ -14,7 +14,7 @@ const conversationSchema = new Schema({
     },
     lastMessage: {
         type: Schema.Types.ObjectId,
-        ref: "Message"
+        ref: "message"
     }
 },{timestamps: true})
 
