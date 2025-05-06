@@ -1,3 +1,4 @@
+const { emailValidator } = require("../helpers/validators");
 const conversationSchema = require("../models/conversationSchema");
 const userSchema = require("../models/userSchema");
 
@@ -8,6 +9,7 @@ const createConversation = async (req, res)=>{
         if(!participentEmail){
             return res.status(400).send({error: "Participent email is required!"})
         }
+        if (emailValidator(participentEmail)) return res.status(400).send({error: "Email is not valid"});
         if(participentEmail === req.user.email){
            return res.status(400).send({error: "Try with another email"})
         }
@@ -16,7 +18,12 @@ const createConversation = async (req, res)=>{
         if(!participentData){
             return res.status(400).send({error: "No user found!"})
         }
-
+        const existingParticipent = await conversationSchema.findOne({
+            $or:[{creator: req.user.id, participent: participentData._id}, {participent: req.user.id, creator: participentData._id}]
+        })
+        
+        if(existingParticipent) return res.status(400).send({error: "Already exist!!!"})
+        
         const conversation = new conversationSchema({
             creator: req.user.id,
             participent: participentData._id,
@@ -25,7 +32,7 @@ const createConversation = async (req, res)=>{
 
         res.status(200).send(conversation)
     } catch (error) {
-        res.status(500).send("Server error!")
+        res.status(500).send({error: "Server error!"})
     }
 
 }
