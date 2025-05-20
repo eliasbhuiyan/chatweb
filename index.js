@@ -19,4 +19,7 @@ dbConfig();
 
 app.use(router);
 
+// console.log(new Date("2025-05-20T10:12:13.008+00:00").toLocaleString());
+
+
 httpServer.listen(8000, () => console.log("Server is running"));
