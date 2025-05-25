@@ -4,8 +4,8 @@ const authMiddleware = (req, res, next)=>{
         const token = req.header("authorization")         
        if(token){
         jwt.verify(token, process.env.JWT_SEC, function(err, decoded) {
-            if(err){
-                res.status(400).send({error: "Bad request!"})
+            if(err){               
+              return res.status(400).send({error: "Bad request!"})
             }
             if(decoded.data){            
                 req.user = decoded.data

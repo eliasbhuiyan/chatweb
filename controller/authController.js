@@ -61,7 +61,7 @@ const verifyEmailAddress = async (req, res)=>{
 // Login Controller
 const loginController = async (req, res) => {
   const { email, password } = req.body;
-
+  
  try {
   if (!email) return res.status(400).send({error: "Email is required!"});
   if (emailValidator(email)) return res.status(400).send({error: "Email is not valid"});
@@ -144,11 +144,15 @@ const update = async (req, res)=>{
  try {
    const existingUser = await userSchema.findById(req.user.id)
 
-  if(fullName) existingUser.fullName = fullName.trim();
+  if(fullName) existingUser.fullName = fullName.trim().split(/\s+/).join(' ');
   if(password) existingUser.password = password;
-
+  
   if(req?.file?.path){
-    await cloudinary.uploader.destroy(existingUser.avatar.split('/').pop().split('.')[0])
+    
+    // delete existing avatar if exist
+    if(existingUser.avatar) await cloudinary.uploader.destroy(existingUser.avatar.split('/').pop().split('.')[0]);
+    
+    // Upload Avatar
     const result = await cloudinary.uploader.upload(req.file.path)
     existingUser.avatar = result.url;
     fs.unlinkSync(req.file.path)

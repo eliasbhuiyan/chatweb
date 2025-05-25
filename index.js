@@ -15,6 +15,12 @@ const io = new Server(httpServer, {
 });
 global.io = io;
 
+io.on("connection", socket => {
+    console.log("user connected with socket");
+    
+    socket.join("join_room");
+});
+
 dbConfig();
 
 app.use(router);
