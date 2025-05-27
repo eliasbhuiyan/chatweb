@@ -9,23 +9,31 @@ const app = express();
 app.use(express.json());
 app.use(cors())
 const httpServer = http.createServer(app);
-
 const io = new Server(httpServer, {
     cors: "*"
 });
 global.io = io;
-
+const activeUsers = new Map()
 io.on("connection", socket => {
-    console.log("user connected with socket");
-    
-    socket.join("join_room");
+    socket.on("join_room", (convoId)=>{
+        socket.join(convoId)
+    })
+
+    socket.on("join_user", (userId)=>{
+        activeUsers.set(socket.id, userId)
+        io.emit("active_users", Array.from(activeUsers.values()))
+    })
+  
+    socket.on("disconnect",()=>{
+        activeUsers.delete(socket.id)
+        setTimeout(() => {
+            io.emit("active_users", Array.from(activeUsers.values()))
+        }, 5000);
+    })
 });
 
 dbConfig();
 
 app.use(router);
-
-// console.log(new Date("2025-05-20T10:12:13.008+00:00").toLocaleString());
-
 
 httpServer.listen(8000, () => console.log("Server is running"));

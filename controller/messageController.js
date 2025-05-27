@@ -23,7 +23,7 @@ try {
 
     await conversationSchema.findByIdAndUpdate(existingConversation._id, {lastMessage: message})
     
-    global.io.emit("new_message", message)
+    global.io.to(conversationId).emit("new_message", message)
 
     res.status(200).send(message)
 } catch (error) {
