@@ -7,10 +7,10 @@ const { Server } = require("socket.io");
 const cors = require("cors")
 const app = express();
 app.use(express.json());
-app.use(cors())
+app.use(cors("https://chatweb-app-1pfm.onrender.com))
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
-    cors: "*"
+    cors: "https://chatweb-app-1pfm.onrender.com"
 });
 global.io = io;
 const activeUsers = new Map()
