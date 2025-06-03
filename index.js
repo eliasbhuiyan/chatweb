@@ -8,11 +8,11 @@ const cors = require("cors")
 const app = express();
 app.use(express.json());
 app.use(cors({
-    origin: 'https://chatweb-app-1pfm.onrender.com',
+    origin: ['https://chatweb-app-1pfm.onrender.com', 'http://localhost:5173'],
 }))
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
-    cors: "https://chatweb-app-1pfm.onrender.com"
+    cors: ['https://chatweb-app-1pfm.onrender.com', 'http://localhost:5173']
 });
 global.io = io;
 const activeUsers = new Map()
