@@ -7,7 +7,9 @@ const { Server } = require("socket.io");
 const cors = require("cors")
 const app = express();
 app.use(express.json());
-app.use(cors("https://chatweb-app-1pfm.onrender.com))
+app.use(cors({
+    origin: 'https://chatweb-app-1pfm.onrender.com',
+}))
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
     cors: "https://chatweb-app-1pfm.onrender.com"
