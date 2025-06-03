@@ -10,7 +10,7 @@ app.use(express.json());
 app.use(cors())
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
-    cors: "*"
+    cors: "https://chatweb-app.vercel.app"
 });
 global.io = io;
 const activeUsers = new Map()
