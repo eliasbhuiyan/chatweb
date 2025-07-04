@@ -12,6 +12,11 @@ const messageSchema = new Schema({
         ref: "User",
         required: true
     },
+    contentType:{
+        type: String,
+        default: "text",
+        enum: ["text", "image", "voice"]
+    },
     content: {
         type: String,
     },
