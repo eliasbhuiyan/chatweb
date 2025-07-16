@@ -3,7 +3,7 @@ const messageSchema = require("../models/messageSchema");
 const cloudinary = require("../helpers/cloudinary");
 const fs = require('fs');
 const sendMessage = async (req, res)=>{
-// try {
+try {
   const {reciverId,contentType, content, conversationId} = req.body;  
   
   if(!reciverId || !conversationId){
@@ -34,31 +34,28 @@ const sendMessage = async (req, res)=>{
     global.io.to(conversationId).emit("new_message", message)
 
     res.status(200).send(message)
-// } catch (error) {
-//   res.status(500).send("Server error!")
-// }
+} catch (error) {
+  res.status(500).send("Server error!")
+}
 }
 
 const getMessages = async (req, res)=>{
-    // try {
+    try {
      const {conversationid} = req.params;
 
      const page = parseInt(req.query.page) || 1; // Default to page 1
      const limit = parseInt(req.query.limit) || 20; // Default 20 messages per page
-     console.log(limit);
      const skip = (page - 1) * limit;
     
      const messages = await messageSchema.find({conversation: conversationid})
+     .limit(limit)
       .sort({createdAt: -1})
-      .limit(limit)
      
       // Get total count of messages for this chat
     const totalMessages = await messageSchema.countDocuments({conversation: conversationid});
         // Calculate if there are more messages to load
     const hasMore = totalMessages > (skip + limit);
-     const reversedMessages = messages.reverse();
-    //  console.log(reversedMessages);
-     
+     messages.reverse()
      res.status(200).send({messages,
       pagination: {
         currentPage: page,
@@ -66,20 +63,24 @@ const getMessages = async (req, res)=>{
         hasMore,
         limit
       }})
-    // } catch (error) {
-    //   res.status(500).send("Server error!")
-    // }
+    } catch (error) {
+      res.status(500).send("Server error!")
+    }
 }
 
 const deleteMessage = async (req, res)=>{
 try {
   const { messageId } = req.params;
+console.log("messageId",messageId);
 
   const message = await messageSchema.findById(messageId);
   if (!message) {
     return res.status(404).send("Message not found");
   }
-
+  if (message.contentType === "image") {
+    await cloudinary.uploader.destroy(`vibez/chat/${message.content.split('/').pop().split('.')[0]}`);
+  }
+  
   await message.deleteOne();
 
   // Update last message in conversation if needed
@@ -93,9 +94,8 @@ try {
       lastMessage: lastMessage ? lastMessage._id : null,
     });
   }
-
-  global.io.to(message.conversation).emit("message_deleted", messageId);
   
+  global.io.to(conversation._id).emit("message_deleted", messageId);
   res.status(200).send("Message deleted successfully");
 } catch (error) {
   res.status(500).send("Server error");
