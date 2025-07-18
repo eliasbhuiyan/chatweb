@@ -56,7 +56,6 @@ const getMessages = async (req, res)=>{
         // Calculate if there are more messages to load
     const hasMore = totalMessages > (skip + limit);
      messages.reverse()
-     console.log(messages);
      
      res.status(200).send({messages,
       pagination: {
