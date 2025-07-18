@@ -153,7 +153,7 @@ const update = async (req, res)=>{
     
     // Upload Avatar
     const result = await cloudinary.uploader.upload(req.file.path, { folder: "vibez/avatar" });
-    existingUser.avatar = result.url;
+    existingUser.avatar = result.secure_url;
     fs.unlinkSync(req.file.path)
   }
   existingUser.save()

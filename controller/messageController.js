@@ -18,11 +18,11 @@ try {
     result = await cloudinary.uploader.upload(req.file.path, { folder: `vibez/chat`});
     fs.unlinkSync(req.file.path)
   }
-
+  
   const message = new messageSchema({
       sender: req.user.id,
       reciver: reciverId,
-      content: content || result?.url,
+      content: content || result?.secure_url,
       conversation: existingConversation._id,
       contentType
   })
@@ -56,6 +56,8 @@ const getMessages = async (req, res)=>{
         // Calculate if there are more messages to load
     const hasMore = totalMessages > (skip + limit);
      messages.reverse()
+     console.log(messages);
+     
      res.status(200).send({messages,
       pagination: {
         currentPage: page,
